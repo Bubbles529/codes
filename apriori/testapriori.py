@@ -14,6 +14,14 @@ class TestApriori(unittest.TestCase):
         return trans
 
 
+    def create_freq_sets(self, str_):
+        freq_sets = []
+        for items in str_.split(';'):
+            set_ = frozenset([int(i) for i in items.split() if i])
+            freq_sets.append(set_)
+        return freq_sets
+
+
     def create_rules(self, str_):
         rules = []
         for rule in str_.split(';'):
@@ -55,7 +63,7 @@ class TestApriori(unittest.TestCase):
         trans = self.create_trans("1 2 3;1 2 4;1 2 5;3 4 5")
         _ = apriori.Apriori()
         freq_sets = [j for i in _.calc_frequent_sets(trans,0.75) for j in i]
-        self.assertEqual(set(freq_sets), set([frozenset(i) for i in [[1],[2],[1,2]]]))
+        self.assertEqual(set(freq_sets), set(self.create_freq_sets("1;2;1 2")))
 
 
     def test_calc_association_rules(self):
