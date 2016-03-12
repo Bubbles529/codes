@@ -5,12 +5,14 @@ import logging
 import random
 
 class SVM():
-    '''线性SVM'''
+    '''SVM，当前只实现了线性'''
 
-    def __init__(self, C=1.0, toler=0.001, max_iter=30):
+    def __init__(self, C=1.0, toler=0.001, max_iter=30,  alpha_change_delta = 0.00001):
+        '''初始化'''
         self.C = C
         self.toler = toler
         self.max_iter = max_iter
+        self.alpha_change_delta =  alpha_change_delta
 
 
     def fit(self, dataMatIn, classLabels):
@@ -23,7 +25,7 @@ class SVM():
             Y = zeros(classLabels.shape)
             Y[classLabels==label] = 1
             Y[classLabels!=label] = -1
-            smo_ = self.SmoSolver(X,mat(Y).T, self.C, self.toler, self.max_iter)
+            smo_ = self.SmoSolver(X,mat(Y).T, self.C, self.toler, self.max_iter, self.alpha_change_delta)
             smo_.solver()
             smo_.plot_figure()
             self.smo_soloers.append(smo_)
@@ -33,8 +35,10 @@ class SVM():
         return self
     
 
-    def predict(self, x):
+    def predict(self, x_array):
         '''预测数据，输入为array'''
+        logging.warn('predict for 1 of {}'.format(len(self.labels)))
+        x = mat(x_array)
         if len(self.labels) == 2:
             v = self.smo_soloers[0].calc_fx(x)
             return self.labels[0] if v>0 else self.labels[1]
@@ -47,16 +51,18 @@ class SVM():
     class SmoSolver():
         '''SMO求解'''
         
-        def __init__(self,  X, Y, C, toler,max_iter):
+        def __init__(self,  X, Y, C, toler,max_iter, alpha_change_delta):
             '''初始化'''
             self.X = X
             self.Y = Y
             self.C = C
             self.tol = toler
+            self.max_iter = max_iter
+            self.alpha_change_delta = alpha_change_delta
+            
             self.m = shape(X)[0]
             self.alphas = mat(zeros((self.m,1)))
             self.b = 0
-            self.max_iter = max_iter
             self.error_cache = mat(zeros((self.m,2)))   # 用以记录历史上的错误值，便于较快选择第二个点
 
 
@@ -196,7 +202,7 @@ class SVM():
             self.alphas[j] = self.clip_value(self.alphas[j],H,L)
             self.set_error_cache(j)
             
-            if (abs(self.alphas[j] - alpha_j_old) < 0.00001):
+            if (abs(self.alphas[j] - alpha_j_old) < self.alpha_change_delta):
                 print("j not moving enough")
                 return 0   
             self.alphas[i] += self.Y[j]*self.Y[i]*(alpha_j_old - self.alphas[j])
@@ -228,14 +234,23 @@ class SVM():
                 return
 
             x_1 = self.X[:,0].min() -1, self.X[:,0].max() +1
+            x_2 = self.X[:,1].min() -1, self.X[:,1].max() +1
             w = self.calc_w()
 
-            x = linspace(x_1[0], x_1[1], 10)
+            x = linspace(x_1[0], x_1[1], 50, endpoint=True)
             y = (- x*w[0,0] - self.b)/w[1,0]
 
             import matplotlib.pyplot as plt
+            from matplotlib.lines import Line2D
             plt.figure()
             plt.plot(x,y.flat)
             plt.scatter(self.X[:,0].T.A[0], self.X[:,1].T.A[0], c=self.Y.T.A[0])
+            for i, alpha in enumerate(self.alphas):
+                if 0 < alpha < self.C:
+                    pass
+                    #plt.plot([self.X[i,0]], [self.X[i,1]], markersize=10, fillstyle=Line2D.fillStyles[0],  marker='o',markerfacecoloralt='gray',color='cornflowerblue')
+                    #plt.scatter([self.X[i,0]], [self.X[i,1]], s=125, fillstyle=None)
+            plt.ylim(x_2[0], x_2[1])
+            plt.xlim(x_1[0], x_1[1])
 
             
