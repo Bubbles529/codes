@@ -1,7 +1,7 @@
 import scala.collection.mutable.ListBuffer
 
 /**
-  * Created by spirit on 16-3-21.
+  * 八皇后问题解答
   */
 
 object eightQueue{

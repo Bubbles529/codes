@@ -1,7 +1,7 @@
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by spirit on 16-3-19.
+  * 简单实现计算器，无错误处理
   */
 abstract class CalcNode{
   def value:Double
@@ -80,9 +80,7 @@ object Parse{
 
   private def tempParse(lowerParse:Parse, nodemakers:Array[(Token, NodeMaker)])(index: Int): ParseResult = {
 
-    var ret = lowerParse(index)
-    var node = ret._1
-    var newIndex = ret._2
+    var (node, newIndex) = lowerParse(index)
     var newNode:CalcNode = null
 
     while (true) {
@@ -95,9 +93,7 @@ object Parse{
       for ((str, maker) <- nodemakers) {
         if (h == str) {
           matched = true
-          ret = lowerParse(newIndex + 1)
-          newNode = ret._1
-          newIndex = ret._2
+          (newNode, newIndex) = lowerParse(newIndex + 1)
           node = maker(node, newNode)
         }
       }
@@ -114,16 +110,16 @@ object Parse{
     val h = tokens(index)
     h match {
       case "(" => {
-        val ret = exprParse(index+1)
-        (ret._1, ret._2 + 1) // 第一个必须为 )
+        val (node, newIndex) = exprParse(index+1)
+        (node, newIndex + 1) // 第一个必须为 )
       }
       case "-" => {
-        val ret = numberParse(index+1)
-        (new NegNum(ret._1), ret._2)
+        val (node, newIndex) = numberParse(index+1)
+        (new NegNum(node), newIndex)
       }
       case "+" => {
-        val ret = numberParse(index+1)
-        (new PosNum(ret._1), ret._2)
+        val (node, newIndex) = numberParse(index+1)
+        (new PosNum(node), newIndex)
       }
       case _ => ((new Number(h.toDouble)), index+1)
     }
